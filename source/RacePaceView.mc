@@ -48,6 +48,8 @@ class RacePaceView extends WatchUi.DataField {
         if (meters < 100.0) {
             meters = 100.0;
         }
+        mPerMile = readNumber("displayUnit", 0) == 1;
+
         var adjust = readFloat("distanceAdjust", 0.0);
         mRaceMeters = meters * (1.0 + adjust / 100.0);
 
@@ -62,7 +64,6 @@ class RacePaceView extends WatchUi.DataField {
     }
 
     function compute(info) {
-        mPerMile = System.getDeviceSettings().paceUnits == System.UNIT_STATUTE;
         var unitMeters = mPerMile ? METERS_PER_MILE : METERS_PER_KM;
 
         if (mGoalSeconds <= 0) {

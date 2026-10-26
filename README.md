@@ -14,7 +14,7 @@ plan you are.
 - Before you start it shows your goal finish time.
 - If you have already passed your goal time it shows `--:--` and "Past goal".
 - When you reach the race distance it shows "Done" and your time.
-- Pace is shown per km or per mile, following your watch's own unit setting.
+- Pace is shown per km (you can switch it to per mile with `displayUnit`).
 - The pace is rounded down (the faster way), so holding it keeps you on goal.
 
 It works on the Fenix 6, 7 and 8, Epix 2, Enduro, and Forerunner 245, 255,
@@ -39,6 +39,7 @@ value between `>` and `<` on these lines:
 | `targetTime` | Your goal time as h:mm:ss, e.g. `3:30:00` or `0:45:00` |
 | `targetPace` | Your goal pace as m:ss, e.g. `4:58` |
 | `targetPaceUnit` | `0` = that pace is per km, `1` = per mile |
+| `displayUnit` | Show the needed pace per `0` = km, `1` = mile |
 | `distanceAdjust` | Watches usually measure races a bit long. `1.0` plans for 1% extra. Leave `0.0` if unsure. |
 
 Example, a 1:45:00 half marathon:
