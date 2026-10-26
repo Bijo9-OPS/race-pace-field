@@ -1,0 +1,41 @@
+<settings>
+    <setting propertyKey="@Properties.raceDistance" title="@Strings.RaceDistanceTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.Dist5k</listEntry>
+            <listEntry value="1">@Strings.Dist10k</listEntry>
+            <listEntry value="2">@Strings.DistHalf</listEntry>
+            <listEntry value="3">@Strings.DistFull</listEntry>
+            <listEntry value="4">@Strings.DistCustom</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.customDistance" title="@Strings.CustomDistanceTitle">
+        <settingConfig type="numeric" min="0.1" max="500"/>
+    </setting>
+    <setting propertyKey="@Properties.customUnit" title="@Strings.CustomUnitTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.UnitKm</listEntry>
+            <listEntry value="1">@Strings.UnitMi</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.targetMode" title="@Strings.TargetModeTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.ModeTime</listEntry>
+            <listEntry value="1">@Strings.ModePace</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.targetTime" title="@Strings.TargetTimeTitle">
+        <settingConfig type="alphaNumeric"/>
+    </setting>
+    <setting propertyKey="@Properties.targetPace" title="@Strings.TargetPaceTitle">
+        <settingConfig type="alphaNumeric"/>
+    </setting>
+    <setting propertyKey="@Properties.targetPaceUnit" title="@Strings.TargetPaceUnitTitle">
+        <settingConfig type="list">
+            <listEntry value="0">@Strings.UnitKm</listEntry>
+            <listEntry value="1">@Strings.UnitMi</listEntry>
+        </settingConfig>
+    </setting>
+    <setting propertyKey="@Properties.distanceAdjust" title="@Strings.DistanceAdjustTitle">
+        <settingConfig type="numeric" min="0" max="5"/>
+    </setting>
+</settings>

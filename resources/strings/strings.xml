@@ -1,0 +1,25 @@
+<strings>
+    <string id="AppName">Race Pace Needed</string>
+
+    <string id="RaceDistanceTitle">Race distance</string>
+    <string id="Dist5k">5K</string>
+    <string id="Dist10k">10K</string>
+    <string id="DistHalf">Half marathon</string>
+    <string id="DistFull">Marathon</string>
+    <string id="DistCustom">Custom (set below)</string>
+
+    <string id="CustomDistanceTitle">Custom distance</string>
+    <string id="CustomUnitTitle">Custom distance unit</string>
+    <string id="UnitKm">Kilometres</string>
+    <string id="UnitMi">Miles</string>
+
+    <string id="TargetModeTitle">Goal type</string>
+    <string id="ModeTime">Finish time</string>
+    <string id="ModePace">Average pace</string>
+
+    <string id="TargetTimeTitle">Goal finish time (h:mm:ss)</string>
+    <string id="TargetPaceTitle">Goal pace (m:ss)</string>
+    <string id="TargetPaceUnitTitle">Goal pace is per</string>
+
+    <string id="DistanceAdjustTitle">Extra GPS distance (%)</string>
+</strings>
