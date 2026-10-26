@@ -8,6 +8,12 @@ import Toybox.WatchUi;
 const METERS_PER_KM = 1000.0;
 const METERS_PER_MILE = 1609.344;
 
+// Values returned by DataField.getObscurityFlags().
+const EDGE_LEFT = 1;
+const EDGE_TOP = 2;
+const EDGE_RIGHT = 4;
+const EDGE_BOTTOM = 8;
+
 // Shows the average pace needed over the rest of the race to finish on goal.
 class RacePaceView extends WatchUi.DataField {
 
@@ -115,9 +121,9 @@ class RacePaceView extends WatchUi.DataField {
 
         // On round screens the edges of a field can be cut off; keep text inside.
         var flags = getObscurityFlags();
-        var top = (flags & WatchUi.OBSCURE_TOP) != 0 ? h * 0.12 : h * 0.03;
-        var bottom = (flags & WatchUi.OBSCURE_BOTTOM) != 0 ? h * 0.88 : h * 0.97;
-        var maxWidth = (flags & (WatchUi.OBSCURE_LEFT | WatchUi.OBSCURE_RIGHT)) != 0 ? w * 0.78 : w * 0.94;
+        var top = (flags & EDGE_TOP) != 0 ? h * 0.12 : h * 0.03;
+        var bottom = (flags & EDGE_BOTTOM) != 0 ? h * 0.88 : h * 0.97;
+        var maxWidth = (flags & (EDGE_LEFT | EDGE_RIGHT)) != 0 ? w * 0.78 : w * 0.94;
 
         var smallFont = Graphics.FONT_XTINY;
         var smallH = dc.getFontHeight(smallFont);
@@ -218,9 +224,9 @@ class RacePaceView extends WatchUi.DataField {
         if (text == null) {
             return 0;
         }
-        var parts = [];
+        var parts = [] as Array<Number>;
         var current = 0;
-        var chars = text.toString().toCharArray();
+        var chars = text.toString().toCharArray() as Array<Char>;
         for (var i = 0; i < chars.size(); i++) {
             var code = chars[i].toNumber();
             if (code >= 48 && code <= 57) {
