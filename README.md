@@ -1,4 +1,4 @@
-# Race Pace Needed (Garmin data field)
+# Live Pace Calculator (Garmin data field)
 
 A Connect IQ data field for your run screens. During a race it shows the
 average pace you need to hold **for the rest of the race** to finish on your
@@ -11,6 +11,8 @@ plan you are.
     0:42 ahead
 ```
 
+- It recalculates every 10 seconds from the activity time and the distance
+  covered so far, so the number stays steady instead of flickering.
 - Before you start it shows your goal finish time.
 - If you have already passed your goal time it shows `--:--` and "Past goal".
 - When you reach the race distance it shows "Done" and your time.
@@ -97,7 +99,7 @@ On the Fenix 6:
 2. Go to **Run Settings > Data Screens**, pick a screen, then **Layout** if you
    want fewer, larger fields.
 3. Pick the field to replace, go to **Connect IQ**, and choose
-   **Race Pace Needed**.
+   **Live Pace Calculator**.
 
 It reads best on a 1, 2 or 3-field screen. On a 4-field screen it still shows
 the pace, just smaller.

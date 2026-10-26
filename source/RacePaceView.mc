@@ -7,6 +7,7 @@ import Toybox.WatchUi;
 
 const METERS_PER_KM = 1000.0;
 const METERS_PER_MILE = 1609.344;
+const UPDATE_SECONDS = 10.0;
 
 // Values returned by DataField.getObscurityFlags().
 const EDGE_LEFT = 1;
@@ -20,6 +21,7 @@ class RacePaceView extends WatchUi.DataField {
     hidden var mRaceMeters = 42195.0;   // race distance, including any GPS allowance
     hidden var mGoalSeconds = 0.0;      // goal finish time
     hidden var mPerMile = false;        // show pace per mile instead of per km
+    hidden var mLastCalc = -1000.0;     // timer time of the last recalculation
 
     hidden var mValue = "--:--";
     hidden var mValueIsNumber = true;
@@ -49,6 +51,7 @@ class RacePaceView extends WatchUi.DataField {
             meters = 100.0;
         }
         mPerMile = readNumber("displayUnit", 0) == 1;
+        mLastCalc = -1000.0;
 
         var adjust = readFloat("distanceAdjust", 0.0);
         mRaceMeters = meters * (1.0 + adjust / 100.0);
@@ -79,6 +82,13 @@ class RacePaceView extends WatchUi.DataField {
         if (info has :timerTime && info.timerTime != null) {
             elapsed = info.timerTime / 1000.0;
         }
+
+        // Recalculate every 10 seconds of activity time so the number stays steady.
+        // A smaller timer means a new activity has started.
+        if (elapsed >= mLastCalc && elapsed - mLastCalc < UPDATE_SECONDS) {
+            return;
+        }
+        mLastCalc = elapsed;
 
         var leftMeters = mRaceMeters - doneMeters;
         var leftSeconds = mGoalSeconds - elapsed;
