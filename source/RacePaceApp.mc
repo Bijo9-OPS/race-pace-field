@@ -14,6 +14,11 @@ class RacePaceApp extends Application.AppBase {
         return [ mView ];
     }
 
+    // The menu shown when you open this field's settings on the watch.
+    function getSettingsView() {
+        return [ $.buildSettingsMenu(), new SettingsMenuDelegate() ];
+    }
+
     // Called when the settings are changed from the phone or Garmin Express.
     function onSettingsChanged() {
         if (mView != null) {

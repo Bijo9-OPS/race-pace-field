@@ -26,8 +26,14 @@ It works on the Fenix 6, 7 and 8, Epix 2, Enduro, and Forerunner 245, 255,
 
 ## 1. Set your race and goal
 
-Until the field is on the Connect IQ store, the Garmin Connect phone app
-can't change its settings. So you set them in one text file before you build.
+**On the watch:** the field has its own settings menu with two lines.
+"Race distance" moves to the next distance each time you press it (5K, 10K,
+half marathon, marathon). "Goal time" opens three wheels for hours, minutes
+and seconds. Garmin shows this menu in the data field's options when you set
+up your run screens.
+
+**Before building:** the starting values come from one text file. The Garmin
+Connect phone app can't change settings for an app you copied over yourself.
 
 Open `resources/settings/properties.xml` in any text editor and change only the
 value between `>` and `<` on these lines:

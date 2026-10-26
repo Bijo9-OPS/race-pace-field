@@ -58,11 +58,11 @@ class RacePaceView extends WatchUi.DataField {
 
         if (readNumber("targetMode", 0) == 1) {
             // Goal pace: the finish time is that pace held over the official distance.
-            var pace = parseClock(readString("targetPace", "5:00"), false);
+            var pace = $.parseClock(readString("targetPace", "5:00"), false);
             var paceUnit = readNumber("targetPaceUnit", 0) == 1 ? METERS_PER_MILE : METERS_PER_KM;
             mGoalSeconds = pace * meters / paceUnit;
         } else {
-            mGoalSeconds = parseClock(readString("targetTime", "3:30:00"), meters >= 3000.0).toFloat();
+            mGoalSeconds = $.parseClock(readString("targetTime", "3:30:00"), meters >= 3000.0).toFloat();
         }
     }
 
@@ -226,37 +226,6 @@ class RacePaceView extends WatchUi.DataField {
             return hours.format("%d") + ":" + mins.format("%02d") + ":" + secs.format("%02d");
         }
         return mins.format("%d") + ":" + secs.format("%02d");
-    }
-
-    // Reads "3:30:00", "45:00" or "4:58" as a number of seconds.
-    // With two parts like "3:30", hoursFirst decides between h:mm and m:ss:
-    // a first part under 10 is read as hours for a finish time.
-    hidden function parseClock(text, hoursFirst) {
-        if (text == null) {
-            return 0;
-        }
-        var parts = [] as Array<Number>;
-        var current = 0;
-        var chars = text.toString().toCharArray() as Array<Char>;
-        for (var i = 0; i < chars.size(); i++) {
-            var code = chars[i].toNumber();
-            if (code >= 48 && code <= 57) {
-                current = current * 10 + (code - 48);
-            } else if (chars[i] == ':' || chars[i] == '.') {
-                parts.add(current);
-                current = 0;
-            }
-        }
-        parts.add(current);
-
-        if (parts.size() == 2 && hoursFirst && parts[0] < 10) {
-            return parts[0] * 3600 + parts[1] * 60;
-        }
-        var total = 0;
-        for (var i = 0; i < parts.size() && i < 3; i++) {
-            total = total * 60 + parts[i];
-        }
-        return total;
     }
 
     hidden function readNumber(key, fallback) {
