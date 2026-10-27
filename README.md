@@ -13,6 +13,11 @@ plan you are.
 
 - It recalculates every 10 seconds from the activity time and the distance
   covered so far, so the number stays steady instead of flickering.
+- A coloured arc along the edge of the screen works like Garmin's heart rate
+  gauge for pace: red on the left means slower than needed, green in the
+  middle is on target (within 5 s/km), blue on the right means faster than
+  needed. The dot is your current pace (smoothed). It shows when the field is
+  full screen or at the top or bottom of the screen.
 - Before you start it shows your goal finish time.
 - If you have already passed your goal time it shows `--:--` and "Past goal".
 - When you reach the race distance it shows "Done" and your time.

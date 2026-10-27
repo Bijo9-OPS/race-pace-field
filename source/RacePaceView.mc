@@ -2,12 +2,18 @@ import Toybox.Activity;
 import Toybox.Application;
 import Toybox.Graphics;
 import Toybox.Lang;
+import Toybox.Math;
 import Toybox.System;
 import Toybox.WatchUi;
 
 const METERS_PER_KM = 1000.0;
 const METERS_PER_MILE = 1609.344;
 const UPDATE_SECONDS = 10.0;
+
+// Pace gauge: the arc covers 30 s/km too slow on the left to 30 s/km too
+// fast on the right, so 1 s/km is 2 degrees of a 120 degree arc.
+const GAUGE_RANGE = 30.0;
+const GAUGE_DEG_PER_SEC = 2.0;
 
 // Values returned by DataField.getObscurityFlags().
 const EDGE_LEFT = 1;
@@ -22,6 +28,8 @@ class RacePaceView extends WatchUi.DataField {
     hidden var mGoalSeconds = 0.0;      // goal finish time
     hidden var mPerMile = false;        // show pace per mile instead of per km
     hidden var mLastCalc = -1000.0;     // timer time of the last recalculation
+    hidden var mNeeded = 0.0;           // pace needed in seconds per metre, 0 if none
+    hidden var mSpeed = 0.0;            // smoothed current speed in metres per second
 
     hidden var mValue = "--:--";
     hidden var mValueIsNumber = true;
@@ -81,6 +89,14 @@ class RacePaceView extends WatchUi.DataField {
             elapsed = info.timerTime / 1000.0;
         }
 
+        // The gauge pointer follows the current pace every second, smoothed so
+        // it doesn't jump around with each GPS reading.
+        var speed = 0.0;
+        if (info has :currentSpeed && info.currentSpeed != null) {
+            speed = info.currentSpeed.toFloat();
+        }
+        mSpeed = (mSpeed <= 0.0) ? speed : mSpeed * 0.8 + speed * 0.2;
+
         // Recalculate every 10 seconds of activity time so the number stays steady.
         // Before the start it updates every second, so a new goal shows at once.
         // A smaller timer means a new activity has started.
@@ -88,6 +104,7 @@ class RacePaceView extends WatchUi.DataField {
             return;
         }
         mLastCalc = elapsed;
+        mNeeded = 0.0;
 
         // Settings changed in the watch menu are saved, but the running field is
         // not told about them, so read them again on every recalculation.
@@ -111,7 +128,8 @@ class RacePaceView extends WatchUi.DataField {
             return;
         }
 
-        var needed = leftSeconds / leftMeters * unitMeters;
+        mNeeded = leftSeconds / leftMeters;
+        var needed = mNeeded * unitMeters;
         var value = formatPace(needed);
 
         // How far ahead or behind the goal you are, against an even-pace plan.
@@ -167,10 +185,68 @@ class RacePaceView extends WatchUi.DataField {
             }
         }
 
+        drawGauge(dc, flags, dark);
+
         var font = pickFont(dc, mValue, maxWidth, valueBottom - valueTop);
         dc.setColor(fg, Graphics.COLOR_TRANSPARENT);
         dc.drawText(cx, (valueTop + valueBottom) / 2, font, mValue,
             Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
+    }
+
+    // Coloured arc along the edge of the screen, like Garmin's heart rate gauge:
+    // red on the left (too slow), green in the middle (on target), blue on the
+    // right (faster than needed). The dot shows the current pace. It is drawn
+    // when the field touches the top or bottom edge of the screen.
+    hidden function drawGauge(dc, flags, dark) {
+        var settings = System.getDeviceSettings();
+        var screenW = settings.screenWidth;
+        var screenH = settings.screenHeight;
+        if (dc.getWidth() < screenW * 0.9) {
+            return;
+        }
+        var atTop = (flags & EDGE_TOP) != 0;
+        var atBottom = (flags & EDGE_BOTTOM) != 0;
+        if (!atTop && !atBottom) {
+            return;
+        }
+
+        // Screen centre in this field's coordinates.
+        var cx = dc.getWidth() / 2;
+        var cy = atTop ? screenH / 2 : dc.getHeight() - screenH / 2;
+        var r = screenW / 2 - 6;
+        // Arc across the top from 150 to 30 degrees, or across the bottom from 210 to 330.
+        var left = atTop ? 150.0 : 210.0;
+        var dir = atTop ? -1.0 : 1.0;
+
+        var bands = [-30, -15, -5, 5, 15, 30];
+        var colors = [Graphics.COLOR_RED, Graphics.COLOR_ORANGE, Graphics.COLOR_GREEN,
+                      Graphics.COLOR_BLUE, Graphics.COLOR_DK_BLUE];
+        dc.setPenWidth(8);
+        for (var i = 0; i < colors.size(); i++) {
+            var a1 = left + dir * (bands[i] + GAUGE_RANGE) * GAUGE_DEG_PER_SEC;
+            var a2 = left + dir * (bands[i + 1] + GAUGE_RANGE) * GAUGE_DEG_PER_SEC;
+            dc.setColor(colors[i], Graphics.COLOR_TRANSPARENT);
+            dc.drawArc(cx, cy, r, atTop ? Graphics.ARC_CLOCKWISE : Graphics.ARC_COUNTER_CLOCKWISE, a1, a2);
+        }
+        dc.setPenWidth(1);
+
+        if (mNeeded <= 0.0 || mSpeed < 0.5) {
+            return;
+        }
+        // Seconds per km faster (+) or slower (-) than needed.
+        var faster = (mNeeded - 1.0 / mSpeed) * 1000.0;
+        if (faster > GAUGE_RANGE) {
+            faster = GAUGE_RANGE;
+        } else if (faster < -GAUGE_RANGE) {
+            faster = -GAUGE_RANGE;
+        }
+        var angle = Math.toRadians(left + dir * (faster + GAUGE_RANGE) * GAUGE_DEG_PER_SEC);
+        var px = cx + r * Math.cos(angle);
+        var py = cy - r * Math.sin(angle);
+        dc.setColor(dark ? Graphics.COLOR_BLACK : Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(px, py, 9);
+        dc.setColor(dark ? Graphics.COLOR_WHITE : Graphics.COLOR_BLACK, Graphics.COLOR_TRANSPARENT);
+        dc.fillCircle(px, py, 6);
     }
 
     // Biggest font that fits the space. Number fonts only have digits and ':'.
