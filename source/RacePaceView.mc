@@ -52,9 +52,8 @@ class RacePaceView extends WatchUi.DataField {
         }
         mPerMile = readNumber("displayUnit", 0) == 1;
 
-        // Extra metres plan for the watch measuring the race long, and act as a buffer.
         var adjust = readFloat("distanceAdjust", 0.0);
-        mRaceMeters = meters * (1.0 + adjust / 100.0) + readNumber("extraMeters", 0);
+        mRaceMeters = meters * (1.0 + adjust / 100.0);
 
         if (readNumber("targetMode", 0) == 1) {
             // Goal pace: the finish time is that pace held over the official distance.

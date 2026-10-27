@@ -28,9 +28,7 @@ It works on the Fenix 6, 7 and 8, Epix 2, Enduro, and Forerunner 245, 255,
 
 **On the watch:** the field has its own settings menu.
 "Race distance" moves to the next distance each time you press it (5K, 10K,
-half marathon, marathon, custom). "Extra distance" adds 0 to 1000 m to the
-race, because watches usually measure a race long (300 m is a sensible start
-for a half marathon); it also works as a small time buffer. "Goal time" opens three short
+half marathon, marathon, custom). "Goal time" opens three short
 number lists in turn (hours, minutes, seconds): UP and DOWN scroll, START picks
 the number and moves on, and the last one saves. "Custom distance" works the
 same way for kilometres and hundredths (for example 15 then 00) and switches
@@ -53,7 +51,6 @@ value between `>` and `<` on these lines:
 | `targetPace` | Your goal pace as m:ss, e.g. `4:58` |
 | `targetPaceUnit` | `0` = that pace is per km, `1` = per mile |
 | `displayUnit` | Show the needed pace per `0` = km, `1` = mile |
-| `extraMeters` | Metres added to the race distance, e.g. `300` |
 | `distanceAdjust` | Watches usually measure races a bit long. `1.0` plans for 1% extra. Leave `0.0` if unsure. |
 
 Example, a 1:45:00 half marathon:

@@ -41,9 +41,6 @@
             <listEntry value="1">@Strings.UnitMi</listEntry>
         </settingConfig>
     </setting>
-    <setting propertyKey="@Properties.extraMeters" title="@Strings.ExtraMetersTitle">
-        <settingConfig type="numeric" min="0" max="2000"/>
-    </setting>
     <setting propertyKey="@Properties.distanceAdjust" title="@Strings.DistanceAdjustTitle">
         <settingConfig type="numeric" min="0" max="5"/>
     </setting>
