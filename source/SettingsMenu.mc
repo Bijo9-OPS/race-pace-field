@@ -3,7 +3,7 @@ import Toybox.Graphics;
 import Toybox.Lang;
 import Toybox.WatchUi;
 
-// On-watch settings: race distance and goal finish time.
+// On-watch settings: race distance, custom distance and goal finish time.
 
 function distanceName(index) {
     if (index == 0) {
@@ -15,7 +15,21 @@ function distanceName(index) {
     } else if (index == 3) {
         return "Marathon";
     }
-    return "Custom";
+    return "Custom " + $.customKmText();
+}
+
+// The custom distance in km, e.g. "15.00 km".
+function customKm() {
+    var v = Application.Properties.getValue("customDistance");
+    var km = (v instanceof Number || v instanceof Float) ? v.toFloat() : 42.195;
+    if ($.settingNumber("customUnit", 0) == 1) {
+        km = km * METERS_PER_MILE / METERS_PER_KM;
+    }
+    return km;
+}
+
+function customKmText() {
+    return $.customKm().format("%.2f") + " km";
 }
 
 function settingNumber(key, fallback) {
@@ -39,21 +53,26 @@ function buildSettingsMenu() {
         $.distanceName($.settingNumber("raceDistance", 2)), :distance, {}));
     menu.addItem(new WatchUi.MenuItem("Goal time",
         $.settingString("targetTime", "1:43:30"), :goal, {}));
+    menu.addItem(new WatchUi.MenuItem("Custom distance",
+        $.customKmText(), :custom, {}));
     return menu;
 }
 
 class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
 
-    function initialize() {
+    hidden var mMenu;
+
+    function initialize(menu) {
         Menu2InputDelegate.initialize();
+        mMenu = menu;
     }
 
     function onSelect(item) {
         var id = item.getId();
         if (id == :distance) {
-            // Each press moves to the next distance: 5K, 10K, half, marathon.
+            // Each press moves to the next distance: 5K, 10K, half, marathon, custom.
             var current = $.settingNumber("raceDistance", 2);
-            var next = (current >= 3) ? 0 : current + 1;
+            var next = (current >= 4) ? 0 : current + 1;
             Application.Properties.setValue("raceDistance", next);
             item.setSubLabel($.distanceName(next));
             $.settingsChanged();
@@ -72,6 +91,28 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
                 :defaults => [(seconds / 3600) % 10, (seconds % 3600) / 60, seconds % 60]
             });
             WatchUi.pushView(picker, new GoalPickerDelegate(item), WatchUi.SLIDE_LEFT);
+        } else if (id == :custom) {
+            var km = $.customKm();
+            var whole = km.toNumber();
+            var hundredths = ((km - whole) * 100 + 0.5).toNumber();
+            if (whole > 99) {
+                whole = 99;
+            }
+            if (hundredths > 99) {
+                hundredths = 99;
+            }
+            var picker = new WatchUi.Picker({
+                :title => new WatchUi.Text({
+                    :text => "Distance km",
+                    :color => Graphics.COLOR_WHITE,
+                    :font => Graphics.FONT_SMALL,
+                    :locX => WatchUi.LAYOUT_HALIGN_CENTER,
+                    :locY => WatchUi.LAYOUT_VALIGN_BOTTOM
+                }),
+                :pattern => [new NumberFactory(99, "%d"), new NumberFactory(99, ".%02d")],
+                :defaults => [whole, hundredths]
+            });
+            WatchUi.pushView(picker, new DistancePickerDelegate(item, mMenu), WatchUi.SLIDE_LEFT);
         }
     }
 }
@@ -121,6 +162,42 @@ class GoalPickerDelegate extends WatchUi.PickerDelegate {
         Application.Properties.setValue("targetTime", text);
         Application.Properties.setValue("targetMode", 0);
         mItem.setSubLabel(text);
+        $.settingsChanged();
+        WatchUi.popView(WatchUi.SLIDE_RIGHT);
+        return true;
+    }
+
+    function onCancel() {
+        WatchUi.popView(WatchUi.SLIDE_RIGHT);
+        return true;
+    }
+}
+
+// Saves a custom distance in km and makes it the race distance.
+class DistancePickerDelegate extends WatchUi.PickerDelegate {
+
+    hidden var mItem;
+    hidden var mMenu;
+
+    function initialize(item, menu) {
+        PickerDelegate.initialize();
+        mItem = item;
+        mMenu = menu;
+    }
+
+    function onAccept(values) {
+        var km = values[0] + values[1] / 100.0;
+        if (km < 0.1) {
+            km = 0.1;
+        }
+        Application.Properties.setValue("customDistance", km.toFloat());
+        Application.Properties.setValue("customUnit", 0);
+        Application.Properties.setValue("raceDistance", 4);
+        mItem.setSubLabel($.customKmText());
+        var index = mMenu.findItemById(:distance);
+        if (index >= 0) {
+            mMenu.getItem(index).setSubLabel($.distanceName(4));
+        }
         $.settingsChanged();
         WatchUi.popView(WatchUi.SLIDE_RIGHT);
         return true;
