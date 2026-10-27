@@ -25,7 +25,7 @@ plan you are.
 - The pace is rounded down (the faster way), so holding it keeps you on goal.
 
 It works on the Fenix 6, 7 and 8, Epix 2, Enduro, and Forerunner 245, 255,
-265, 745, 945, 955 and 965 families.
+265, 745, 945, 955, 965 and 970 families.
 
 ---
 
