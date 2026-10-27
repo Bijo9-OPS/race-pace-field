@@ -55,6 +55,8 @@ function buildSettingsMenu() {
         $.settingString("targetTime", "1:43:30"), :goal, {}));
     menu.addItem(new WatchUi.MenuItem("Custom distance",
         $.customKmText(), :custom, {}));
+    menu.addItem(new WatchUi.MenuItem("Extra distance",
+        $.settingNumber("extraMeters", 0).format("%d") + " m", :extra, {}));
     return menu;
 }
 
@@ -80,6 +82,15 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
         } else if (id == :goal) {
             var seconds = $.parseClock($.settingString("targetTime", "1:43:30"), true);
             $.openNumberList(:goal, [(seconds / 3600) % 10, (seconds % 3600) / 60, seconds % 60], 0, item, mMenu);
+        } else if (id == :extra) {
+            // One list from 0 to 1000 m in 50 m steps; START picks and saves.
+            var list = new WatchUi.Menu2({:title => "Extra distance"});
+            for (var m = 0; m <= 1000; m += 50) {
+                list.addItem(new WatchUi.MenuItem(m.format("%d") + " m", null, m, {}));
+            }
+            var current = $.settingNumber("extraMeters", 0);
+            list.setFocus(current > 1000 ? 20 : current / 50);
+            WatchUi.pushView(list, new ExtraDistanceDelegate(item), WatchUi.SLIDE_LEFT);
         } else if (id == :custom) {
             var km = $.customKm();
             var whole = km.toNumber();
@@ -92,6 +103,24 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
             }
             $.openNumberList(:custom, [whole, hundredths], 0, item, mMenu);
         }
+    }
+}
+
+class ExtraDistanceDelegate extends WatchUi.Menu2InputDelegate {
+
+    hidden var mItem;
+
+    function initialize(item) {
+        Menu2InputDelegate.initialize();
+        mItem = item;
+    }
+
+    function onSelect(item) {
+        var meters = item.getId();
+        Application.Properties.setValue("extraMeters", meters);
+        mItem.setSubLabel(meters.format("%d") + " m");
+        $.settingsChanged();
+        WatchUi.popView(WatchUi.SLIDE_RIGHT);
     }
 }
 

@@ -51,6 +51,7 @@ value between `>` and `<` on these lines:
 | `targetPace` | Your goal pace as m:ss, e.g. `4:58` |
 | `targetPaceUnit` | `0` = that pace is per km, `1` = per mile |
 | `displayUnit` | Show the needed pace per `0` = km, `1` = mile |
+| `extraMeters` | Metres added to the race distance, e.g. `300` |
 | `distanceAdjust` | Watches usually measure races a bit long. `1.0` plans for 1% extra. Leave `0.0` if unsure. |
 
 Example, a 1:45:00 half marathon:
