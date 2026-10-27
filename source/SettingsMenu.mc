@@ -79,10 +79,7 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
             WatchUi.requestUpdate();
         } else if (id == :goal) {
             var seconds = $.parseClock($.settingString("targetTime", "1:43:30"), true);
-            var view = new WheelView("Goal time",
-                [(seconds / 3600) % 10, (seconds % 3600) / 60, seconds % 60],
-                [9, 59, 59], ["%d", "%02d", "%02d"], ":");
-            WatchUi.pushView(view, new WheelDelegate(view, :goal, item, mMenu), WatchUi.SLIDE_LEFT);
+            $.openNumberList(:goal, [(seconds / 3600) % 10, (seconds % 3600) / 60, seconds % 60], 0, item, mMenu);
         } else if (id == :custom) {
             var km = $.customKm();
             var whole = km.toNumber();
@@ -93,163 +90,73 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
             if (hundredths > 99) {
                 hundredths = 99;
             }
-            var view = new WheelView("Distance km", [whole, hundredths], [99, 99], ["%d", "%02d"], ".");
-            WatchUi.pushView(view, new WheelDelegate(view, :custom, item, mMenu), WatchUi.SLIDE_LEFT);
+            $.openNumberList(:custom, [whole, hundredths], 0, item, mMenu);
         }
     }
 }
 
 // Garmin's own Picker crashes inside a data field's settings on the Epix 2,
-// so this is a small hand-made set of wheels driven by the watch buttons:
-// UP and DOWN turn the highlighted wheel, START moves to the next wheel and
-// saves after the last one, BACK goes to the previous wheel or leaves.
-class WheelView extends WatchUi.View {
+// and screens we draw ourselves redraw very slowly there, so each "wheel" is
+// a normal scrolling list of numbers: UP and DOWN scroll, START picks the
+// number and moves on to the next wheel, and the last one saves.
+function wheelTitles(kind) {
+    return kind == :goal ? ["Hours", "Minutes", "Seconds"] : ["Kilometres", "Hundredths"];
+}
 
-    var values;
-    var index = 0;
-    hidden var mTitle;
-    hidden var mMax;
-    hidden var mFormats;
-    hidden var mSeparator;
-
-    function initialize(title, startValues, max, formats, separator) {
-        View.initialize();
-        mTitle = title;
-        values = startValues;
-        mMax = max;
-        mFormats = formats;
-        mSeparator = separator;
+function wheelText(kind, values) {
+    if (kind == :goal) {
+        return values[0].format("%d") + ":" + values[1].format("%02d") + ":" + values[2].format("%02d");
     }
+    return values[0].format("%d") + "." + values[1].format("%02d") + " km";
+}
 
-    function turn(step) {
-        var v = values[index] + step;
-        if (v > mMax[index]) {
-            v = 0;
-        } else if (v < 0) {
-            v = mMax[index];
-        }
-        values[index] = v;
-        WatchUi.requestUpdate();
+function openNumberList(kind, values, stage, item, mainMenu) {
+    var max = (kind == :goal && stage == 0) ? 9 : (kind == :goal ? 59 : 99);
+    var format = (stage == 0) ? "%d" : "%02d";
+    var menu = new WatchUi.Menu2({:title => $.wheelTitles(kind)[stage] + " " + $.wheelText(kind, values)});
+    for (var i = 0; i <= max; i++) {
+        menu.addItem(new WatchUi.MenuItem(i.format(format), null, i, {}));
     }
-
-    function onUpdate(dc) {
-        dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_BLACK);
-        dc.clear();
-        var w = dc.getWidth();
-        var h = dc.getHeight();
-
-        dc.drawText(w / 2, h * 0.2, Graphics.FONT_SMALL, mTitle, Graphics.TEXT_JUSTIFY_CENTER);
-
-        var font = Graphics.FONT_LARGE;
-        var texts = [];
-        var total = 0;
-        var sepWidth = dc.getTextWidthInPixels(mSeparator, font);
-        for (var i = 0; i < values.size(); i++) {
-            texts.add(values[i].format(mFormats[i]));
-            total += dc.getTextWidthInPixels(texts[i], font);
-        }
-        total += sepWidth * (values.size() - 1);
-
-        var x = (w - total) / 2;
-        var y = h / 2;
-        var fontH = dc.getFontHeight(font);
-        for (var i = 0; i < texts.size(); i++) {
-            var tw = dc.getTextWidthInPixels(texts[i], font);
-            var cx = x + tw / 2;
-            if (i == index) {
-                dc.setColor(Graphics.COLOR_ORANGE, Graphics.COLOR_TRANSPARENT);
-                // Arrows show which wheel UP and DOWN will turn.
-                dc.fillPolygon([[cx - 8, y - fontH / 2 - 4], [cx + 8, y - fontH / 2 - 4], [cx, y - fontH / 2 - 14]]);
-                dc.fillPolygon([[cx - 8, y + fontH / 2 + 4], [cx + 8, y + fontH / 2 + 4], [cx, y + fontH / 2 + 14]]);
-            } else {
-                dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-            }
-            dc.drawText(cx, y, font, texts[i], Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-            x += tw;
-            if (i < texts.size() - 1) {
-                dc.setColor(Graphics.COLOR_WHITE, Graphics.COLOR_TRANSPARENT);
-                dc.drawText(x + sepWidth / 2, y, font, mSeparator, Graphics.TEXT_JUSTIFY_CENTER | Graphics.TEXT_JUSTIFY_VCENTER);
-                x += sepWidth;
-            }
-        }
-
-        dc.setColor(Graphics.COLOR_LT_GRAY, Graphics.COLOR_TRANSPARENT);
-        var hint = (index == values.size() - 1) ? "START to save" : "START for next";
-        dc.drawText(w / 2, h * 0.72, Graphics.FONT_XTINY, hint, Graphics.TEXT_JUSTIFY_CENTER);
+    menu.setFocus(values[stage]);
+    var delegate = new NumberListDelegate(kind, values, stage, item, mainMenu);
+    if (stage == 0) {
+        WatchUi.pushView(menu, delegate, WatchUi.SLIDE_LEFT);
+    } else {
+        WatchUi.switchToView(menu, delegate, WatchUi.SLIDE_LEFT);
     }
 }
 
-class WheelDelegate extends WatchUi.BehaviorDelegate {
+class NumberListDelegate extends WatchUi.Menu2InputDelegate {
 
-    hidden var mView;
     hidden var mKind;
+    hidden var mValues;
+    hidden var mStage;
     hidden var mItem;
-    hidden var mMenu;
+    hidden var mMainMenu;
 
-    function initialize(view, kind, item, menu) {
-        BehaviorDelegate.initialize();
-        mView = view;
+    function initialize(kind, values, stage, item, mainMenu) {
+        Menu2InputDelegate.initialize();
         mKind = kind;
+        mValues = values;
+        mStage = stage;
         mItem = item;
-        mMenu = menu;
+        mMainMenu = mainMenu;
     }
 
-    // Raw button presses react at once; the page/select behaviours can lag
-    // by several seconds inside a data field's settings on the watch.
-    function onKey(keyEvent) {
-        var key = keyEvent.getKey();
-        if (key == WatchUi.KEY_UP) {
-            mView.turn(1);
-            return true;
-        } else if (key == WatchUi.KEY_DOWN) {
-            mView.turn(-1);
-            return true;
-        } else if (key == WatchUi.KEY_ENTER) {
-            return onSelect();
-        } else if (key == WatchUi.KEY_ESC) {
-            return onBack();
-        }
-        return false;
-    }
-
-    // UP button on watches that send it as a page change
-    function onPreviousPage() {
-        mView.turn(1);
-        return true;
-    }
-
-    // DOWN button on watches that send it as a page change
-    function onNextPage() {
-        mView.turn(-1);
-        return true;
-    }
-
-    // START button
-    function onSelect() {
-        if (mView.index < mView.values.size() - 1) {
-            mView.index += 1;
-            WatchUi.requestUpdate();
-            return true;
+    function onSelect(item) {
+        mValues[mStage] = item.getId();
+        if (mStage < $.wheelTitles(mKind).size() - 1) {
+            $.openNumberList(mKind, mValues, mStage + 1, mItem, mMainMenu);
+            return;
         }
         save();
         WatchUi.popView(WatchUi.SLIDE_RIGHT);
-        return true;
-    }
-
-    function onBack() {
-        if (mView.index > 0) {
-            mView.index -= 1;
-            WatchUi.requestUpdate();
-            return true;
-        }
-        WatchUi.popView(WatchUi.SLIDE_RIGHT);
-        return true;
     }
 
     hidden function save() {
-        var v = mView.values;
+        var v = mValues;
         if (mKind == :goal) {
-            var text = v[0].format("%d") + ":" + v[1].format("%02d") + ":" + v[2].format("%02d");
+            var text = $.wheelText(:goal, v);
             Application.Properties.setValue("targetTime", text);
             Application.Properties.setValue("targetMode", 0);
             mItem.setSubLabel(text);
@@ -262,9 +169,9 @@ class WheelDelegate extends WatchUi.BehaviorDelegate {
             Application.Properties.setValue("customUnit", 0);
             Application.Properties.setValue("raceDistance", 4);
             mItem.setSubLabel($.customKmText());
-            var index = mMenu.findItemById(:distance);
+            var index = mMainMenu.findItemById(:distance);
             if (index >= 0) {
-                mMenu.getItem(index).setSubLabel($.distanceName(4));
+                mMainMenu.getItem(index).setSubLabel($.distanceName(4));
             }
         }
         $.settingsChanged();
