@@ -194,13 +194,31 @@ class WheelDelegate extends WatchUi.BehaviorDelegate {
         mMenu = menu;
     }
 
-    // UP button
+    // Raw button presses react at once; the page/select behaviours can lag
+    // by several seconds inside a data field's settings on the watch.
+    function onKey(keyEvent) {
+        var key = keyEvent.getKey();
+        if (key == WatchUi.KEY_UP) {
+            mView.turn(1);
+            return true;
+        } else if (key == WatchUi.KEY_DOWN) {
+            mView.turn(-1);
+            return true;
+        } else if (key == WatchUi.KEY_ENTER) {
+            return onSelect();
+        } else if (key == WatchUi.KEY_ESC) {
+            return onBack();
+        }
+        return false;
+    }
+
+    // UP button on watches that send it as a page change
     function onPreviousPage() {
         mView.turn(1);
         return true;
     }
 
-    // DOWN button
+    // DOWN button on watches that send it as a page change
     function onNextPage() {
         mView.turn(-1);
         return true;
