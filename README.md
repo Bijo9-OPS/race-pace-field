@@ -32,8 +32,8 @@ half marathon, marathon, custom). "Goal time" opens three short
 number lists in turn (hours, minutes, seconds): UP and DOWN scroll, START picks
 the number and moves on, and the last one saves. "Custom distance" works the
 same way for kilometres and hundredths (for example 15 then 00) and switches
-the race to that distance. Garmin shows this menu in the data field's options when you set
-up your run screens.
+the race to that distance. On the Epix 2 it is under Run > hold MENU > Run Settings >
+ConnectIQ Fields > Live Pace Calculator.
 
 **Before building:** the starting values come from one text file. The Garmin
 Connect phone app can't change settings for an app you copied over yourself.
@@ -98,7 +98,10 @@ numbers change.
    - Mac: install the free **OpenMTP** app (https://openmtp.ganeshrvel.com)
      and open it to see the watch's files.
 2. Copy `RacePace.prg` into the watch folder `GARMIN/APPS`.
-3. Unplug the watch. It may take a minute to settle.
+3. Unplug the watch and restart it (hold LIGHT > Power Off, then turn it on).
+   The file disappears from GARMIN/APPS once the watch has installed it.
+   VS Code sometimes saves the .prg in the project folder instead of bin, so
+   copy the one with the newest Date modified.
 
 ## 5. Add it to your run screen
 
