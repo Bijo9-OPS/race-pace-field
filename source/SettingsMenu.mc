@@ -55,6 +55,8 @@ function buildSettingsMenu() {
         $.settingString("targetTime", "1:43:30"), :goal, {}));
     menu.addItem(new WatchUi.MenuItem("Custom distance",
         $.customKmText(), :custom, {}));
+    menu.addItem(new WatchUi.MenuItem("Fine-tune goal", "Faster / slower", :goalSteps, {}));
+    menu.addItem(new WatchUi.MenuItem("Fine-tune distance", "+ / - km", :customSteps, {}));
     return menu;
 }
 
@@ -78,21 +80,148 @@ class SettingsMenuDelegate extends WatchUi.Menu2InputDelegate {
             $.settingsChanged();
             WatchUi.requestUpdate();
         } else if (id == :goal) {
+            var seconds = $.parseClock($.settingString("targetTime", "1:43:30"), true);
+            var picker = new WatchUi.Picker({
+                :title => new WatchUi.Text({
+                    :text => "Goal h:mm:ss",
+                    :color => Graphics.COLOR_WHITE,
+                    :font => Graphics.FONT_SMALL,
+                    :locX => WatchUi.LAYOUT_HALIGN_CENTER,
+                    :locY => WatchUi.LAYOUT_VALIGN_BOTTOM
+                }),
+                :pattern => [new NumberFactory(9, "%d"), new NumberFactory(59, "%02d"), new NumberFactory(59, "%02d")],
+                :defaults => [(seconds / 3600) % 10, (seconds % 3600) / 60, seconds % 60]
+            });
+            WatchUi.pushView(picker, new GoalPickerDelegate(item), WatchUi.SLIDE_LEFT);
+        } else if (id == :custom) {
+            var km = $.customKm();
+            var whole = km.toNumber();
+            var hundredths = ((km - whole) * 100 + 0.5).toNumber();
+            if (whole > 99) {
+                whole = 99;
+            }
+            if (hundredths > 99) {
+                hundredths = 99;
+            }
+            var picker = new WatchUi.Picker({
+                :title => new WatchUi.Text({
+                    :text => "Distance km",
+                    :color => Graphics.COLOR_WHITE,
+                    :font => Graphics.FONT_SMALL,
+                    :locX => WatchUi.LAYOUT_HALIGN_CENTER,
+                    :locY => WatchUi.LAYOUT_VALIGN_BOTTOM
+                }),
+                :pattern => [new NumberFactory(99, "%d"), new NumberFactory(99, ".%02d")],
+                :defaults => [whole, hundredths]
+            });
+            WatchUi.pushView(picker, new DistancePickerDelegate(item, mMenu), WatchUi.SLIDE_LEFT);
+        } else if (id == :goalSteps) {
             var goalMenu = $.buildStepMenu("Goal time", $.goalText(),
                 [-60, 60, -10, 10, -1, 1],
                 ["Faster 1 min", "Slower 1 min", "Faster 10 sec", "Slower 10 sec", "Faster 1 sec", "Slower 1 sec"]);
-            WatchUi.pushView(goalMenu, new StepMenuDelegate(:goal, item, mMenu, goalMenu), WatchUi.SLIDE_LEFT);
-        } else if (id == :custom) {
+            WatchUi.pushView(goalMenu, new StepMenuDelegate(:goal, mMenu.getItem(mMenu.findItemById(:goal)), mMenu, goalMenu), WatchUi.SLIDE_LEFT);
+        } else if (id == :customSteps) {
             var distanceMenu = $.buildStepMenu("Custom distance", $.customKmText(),
                 [1000, -1000, 100, -100, 10, -10],
                 ["+1 km", "-1 km", "+0.1 km", "-0.1 km", "+0.01 km", "-0.01 km"]);
-            WatchUi.pushView(distanceMenu, new StepMenuDelegate(:custom, item, mMenu, distanceMenu), WatchUi.SLIDE_LEFT);
+            WatchUi.pushView(distanceMenu, new StepMenuDelegate(:custom, mMenu.getItem(mMenu.findItemById(:custom)), mMenu, distanceMenu), WatchUi.SLIDE_LEFT);
         }
     }
 }
 
-// Picker wheels crash inside a data field's settings on the watch, so values
-// are changed with plain menu lines that add or take away a fixed step.
+// One wheel of the goal time picker: 0 up to max.
+class NumberFactory extends WatchUi.PickerFactory {
+
+    hidden var mMax;
+    hidden var mFormat;
+
+    function initialize(max, format) {
+        PickerFactory.initialize();
+        mMax = max;
+        mFormat = format;
+    }
+
+    function getSize() {
+        return mMax + 1;
+    }
+
+    function getValue(index) {
+        return index;
+    }
+
+    function getDrawable(index, selected) {
+        return new WatchUi.Text({
+            :text => index.format(mFormat),
+            :color => Graphics.COLOR_WHITE,
+            :font => Graphics.FONT_NUMBER_MILD,
+            :locX => WatchUi.LAYOUT_HALIGN_CENTER,
+            :locY => WatchUi.LAYOUT_VALIGN_CENTER
+        });
+    }
+}
+
+class GoalPickerDelegate extends WatchUi.PickerDelegate {
+
+    hidden var mItem;
+
+    function initialize(item) {
+        PickerDelegate.initialize();
+        mItem = item;
+    }
+
+    function onAccept(values) {
+        var text = values[0].format("%d") + ":" + values[1].format("%02d") + ":" + values[2].format("%02d");
+        Application.Properties.setValue("targetTime", text);
+        Application.Properties.setValue("targetMode", 0);
+        mItem.setSubLabel(text);
+        $.settingsChanged();
+        WatchUi.popView(WatchUi.SLIDE_RIGHT);
+        return true;
+    }
+
+    function onCancel() {
+        WatchUi.popView(WatchUi.SLIDE_RIGHT);
+        return true;
+    }
+}
+
+// Saves a custom distance in km and makes it the race distance.
+class DistancePickerDelegate extends WatchUi.PickerDelegate {
+
+    hidden var mItem;
+    hidden var mMenu;
+
+    function initialize(item, menu) {
+        PickerDelegate.initialize();
+        mItem = item;
+        mMenu = menu;
+    }
+
+    function onAccept(values) {
+        var km = values[0] + values[1] / 100.0;
+        if (km < 0.1) {
+            km = 0.1;
+        }
+        Application.Properties.setValue("customDistance", km.toFloat());
+        Application.Properties.setValue("customUnit", 0);
+        Application.Properties.setValue("raceDistance", 4);
+        mItem.setSubLabel($.customKmText());
+        var index = mMenu.findItemById(:distance);
+        if (index >= 0) {
+            mMenu.getItem(index).setSubLabel($.distanceName(4));
+        }
+        $.settingsChanged();
+        WatchUi.popView(WatchUi.SLIDE_RIGHT);
+        return true;
+    }
+
+    function onCancel() {
+        WatchUi.popView(WatchUi.SLIDE_RIGHT);
+        return true;
+    }
+}
+
+// Backup to the wheels: plain menu lines that add or take away a fixed step.
 function buildStepMenu(title, current, steps, labels) {
     var menu = new WatchUi.Menu2({:title => title});
     menu.addItem(new WatchUi.MenuItem("Now", current, :current, {}));
