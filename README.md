@@ -19,9 +19,6 @@ plan you are.
 - Pace is shown per km (you can switch it to per mile with `displayUnit`).
 - The pace is rounded down (the faster way), so holding it keeps you on goal.
 
-The **goal-gap** folder holds a second field, Goal Gap, that shows the
-ahead/behind time big in green or red. See goal-gap/README.md.
-
 It works on the Fenix 6, 7 and 8, Epix 2, Enduro, and Forerunner 245, 255,
 265, 745, 945, 955 and 965 families.
 
