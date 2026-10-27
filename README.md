@@ -28,9 +28,10 @@ It works on the Fenix 6, 7 and 8, Epix 2, Enduro, and Forerunner 245, 255,
 
 **On the watch:** the field has its own settings menu with three lines.
 "Race distance" moves to the next distance each time you press it (5K, 10K,
-half marathon, marathon, custom). "Goal time" opens three wheels for hours,
-minutes and seconds. "Custom distance" opens two wheels for kilometres and
-hundredths (for example 15 . 00) and switches the race to that distance. Garmin shows this menu in the data field's options when you set
+half marathon, marathon, custom). "Goal time" opens a list
+with the current goal at the top and lines to make it faster or slower by
+1 minute, 10 seconds or 1 second. "Custom distance" works the same way in
+steps of 1 km, 0.1 km and 0.01 km, and switches the race to that distance. Garmin shows this menu in the data field's options when you set
 up your run screens.
 
 **Before building:** the starting values come from one text file. The Garmin
