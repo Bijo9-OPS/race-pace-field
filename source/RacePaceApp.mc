@@ -22,7 +22,7 @@ class RacePaceApp extends Application.AppBase {
     // Called when the settings are changed from the phone or Garmin Express.
     function onSettingsChanged() {
         if (mView != null) {
-            mView.loadSettings();
+            mView.refresh();
         }
         WatchUi.requestUpdate();
     }

@@ -51,7 +51,6 @@ class RacePaceView extends WatchUi.DataField {
             meters = 100.0;
         }
         mPerMile = readNumber("displayUnit", 0) == 1;
-        mLastCalc = -1000.0;
 
         var adjust = readFloat("distanceAdjust", 0.0);
         mRaceMeters = meters * (1.0 + adjust / 100.0);
@@ -66,14 +65,13 @@ class RacePaceView extends WatchUi.DataField {
         }
     }
 
+    // Forces a fresh calculation on the next update, e.g. after settings change.
+    function refresh() {
+        loadSettings();
+        mLastCalc = -1000.0;
+    }
+
     function compute(info) {
-        var unitMeters = mPerMile ? METERS_PER_MILE : METERS_PER_KM;
-
-        if (mGoalSeconds <= 0) {
-            setText("Set goal", false, "Check settings", 0);
-            return;
-        }
-
         var doneMeters = 0.0;
         var elapsed = 0.0;
         if (info has :elapsedDistance && info.elapsedDistance != null) {
@@ -84,11 +82,22 @@ class RacePaceView extends WatchUi.DataField {
         }
 
         // Recalculate every 10 seconds of activity time so the number stays steady.
+        // Before the start it updates every second, so a new goal shows at once.
         // A smaller timer means a new activity has started.
-        if (elapsed >= mLastCalc && elapsed - mLastCalc < UPDATE_SECONDS) {
+        if (elapsed > 0 && elapsed >= mLastCalc && elapsed - mLastCalc < UPDATE_SECONDS) {
             return;
         }
         mLastCalc = elapsed;
+
+        // Settings changed in the watch menu are saved, but the running field is
+        // not told about them, so read them again on every recalculation.
+        loadSettings();
+        var unitMeters = mPerMile ? METERS_PER_MILE : METERS_PER_KM;
+
+        if (mGoalSeconds <= 0) {
+            setText("Set goal", false, "Check settings", 0);
+            return;
+        }
 
         var leftMeters = mRaceMeters - doneMeters;
         var leftSeconds = mGoalSeconds - elapsed;
